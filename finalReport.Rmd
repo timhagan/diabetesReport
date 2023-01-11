@@ -12,9 +12,9 @@ output:
 knitr::opts_chunk$set(echo = FALSE)
 knitr::opts_chunk$set(warning = FALSE)
 
-##############################
-##### Initialize #####
-##############################
+##################
+### Initialize ###
+##################
 
 library(data.table)
 library(Hmisc)
@@ -23,9 +23,9 @@ library(caret)
 
 diabetes_data <- fread("diabetes_012_health_indicators_BRFSS2015_1.csv")
 
-###################################
-##### Data Filtering/Cleaning #####
-###################################
+###############################
+### Data Filtering/Cleaning ###
+###############################
 
 ### Transform Target Variable
 # Make a binary outcome of diabetic or pre-diabetic
