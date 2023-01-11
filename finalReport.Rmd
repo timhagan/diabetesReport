@@ -12,47 +12,30 @@ output:
 knitr::opts_chunk$set(echo = FALSE)
 knitr::opts_chunk$set(warning = FALSE)
 
-##### Init and Load Data #####
-library(data.table)
+##############################
+##### Initialize #####
+##############################
 
-setwd("C:/Users/timot/OneDrive/Documents/TAMU/684")
+library(data.table)
+library(Hmisc)
+library(splines2)
+library(caret)
+
 diabetes_data <- fread("diabetes_012_health_indicators_BRFSS2015_1.csv")
 
+###################################
+##### Data Filtering/Cleaning #####
+###################################
 
-##### Descriptive Statistics #####
-# Describe Data
-library(Hmisc)
-# describe(diabetes_data)
-
-### Correlation plot
-# corrplot::corrplot(cor(diabetes_data, method = "spearman"))
-
+### Transform Target Variable
 # Make a binary outcome of diabetic or pre-diabetic
 diabetes_data$Diabetes_01 <- ifelse(diabetes_data$Diabetes_012==2,
                                     1,
                                     diabetes_data$Diabetes_012)
 
-
-##### Data Filtering/Altering #####
-
-### Filter out those without healthcare since this is an insurance company
+### Filter out those without healthcare since client is an insurance company
 diabetes_data_ins <- diabetes_data[AnyHealthcare==1]
 diabetes_data_ins$AnyHealthcare <- NULL
-
-###Smoker; removed bc not current behavior
-# Smoker <- diabetes_data_ins$Smoker
-# diabetes_data_ins$Smoker <- NULL
-
-### Save but remove Heavy Alcohol Consumption
-# Why? Upon initial EDA, theit was observed that those who were heavy alcohol
-# consumers had lower rates of diabetes. The ADA posits that "their doctors
-# [may] have cautioned them [against drinking heavily]". This goes against clinical research
-# that shows 
-# HvyAlcoholConsump <- diabetes_data_ins$HvyAlcoholConsump
-# diabetes_data_ins$HvyAlcoholConsump <- NULL
-
-Diabetes_012 <- diabetes_data_ins$Diabetes_012
-diabetes_data_ins$Diabetes_012 <- NULL
 
 ### Change GenHlth to a factor; What is the distance between Excellent and Very Good?
 library(dplyr)
@@ -66,21 +49,20 @@ diabetes_data_ins$GenHlth <- recode(diabetes_data_ins$GenHlth, !!!genHlth_dict)
 ### Change Education to a factor; Proxy for kind of job thus diabetes risk may not be monotonic
 diabetes_data_ins$Education <- factor(diabetes_data_ins$Education)
 
-### Recode Diabetes Indicator to a Factor with a valid R name
-
+### Recode Diabetes Indicator to a Factor with a readable name
 recode_dict <- c(`0` = "DiabetesNo",
                  `1` = "DiabetesYes")
 diabetes_data_ins$Diabetes_YN <- recode(diabetes_data_ins$Diabetes_01, !!!recode_dict)
 
-### Winsorize BMI
+### Winsorize BMI to deal with outliers
 library(DescTools)
 diabetes_data_ins$BMI_win <- Winsorize(diabetes_data_ins$BMI, 
                                        maxval = 50, 
                                        minval = min(diabetes_data_ins$BMI))
 
-######## MODELING ###########
-library(splines2)
-library(caret)
+################
+### MODELING ###
+################
 set.seed(80222)
 trainIndex <- createDataPartition(diabetes_data_ins$Diabetes_01, p = .8, list = F)
 trainData <- diabetes_data_ins[trainIndex,]
